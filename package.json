@@ -1,0 +1,27 @@
+{
+  "name": "juancito-node",
+  "version": "1.0.0",
+  "description": "ai chatbot",
+  "main": "server.js",
+  "scripts": {
+    "test": "test",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "juancito-node"
+  },
+  "keywords": [
+    "openai"
+  ],
+  "author": "Luis Sanchez",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.5",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.2",
+    "express": "^4.18.2",
+    "openai": "^4.24.7"
+  }
+}
