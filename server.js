@@ -23,8 +23,8 @@ const functionInputTest =(question)=>{
 
 const userData = {
     id: 1,
-    name: 'Maria',
-    languageLevel: 'Beginner',
+    name: '',
+    languageLevel: '',
     // Add more fields as needed
 };
 
