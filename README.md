@@ -70,7 +70,9 @@ A Spanish language learning chatbot API using Google Gemini.
 
 The API will be accessible at: `https://luis-dev-lab.com/projects/juancito`
 
-Configure your frontend application to use this as the base URL for API requests.
+The frontend is hosted at: `https://zingy-baklava-d1f0ae.netlify.app`
+
+CORS is configured to allow requests from this Netlify domain.
 
 ### Container Management
 
