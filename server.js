@@ -1,16 +1,33 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const axios = require('axios');
+// const axios = require('axios'); // Remove axios
 const cors = require('cors');
+const { GoogleGenerativeAI } = require("@google/generative-ai"); // Import GoogleGenerativeAI
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// CORS configuration with support for production and development environments
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'https://zingy-baklava-d1f0ae.netlify.app',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
-const openaiApiKey = process.env.OPENAI_API_KEY;
+// --- START Gemini API Specific Changes ---
+// Change the environment variable name from OPENAI_API_KEY to GEMINI_API_KEY
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+// Initialize GoogleGenerativeAI
+// The client will automatically pick up GEMINI_API_KEY from environment variables.
+const genAI = new GoogleGenerativeAI(geminiApiKey); // Pass API key directly
+// --- END Gemini API Specific Changes ---
 
 const question = 'entendiste?'
 
@@ -47,24 +64,47 @@ function isSpanishInput(userMessage) {
     return spanishKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
 }
 
-async function getChatResponse(messages, userData, functionInputTest, model = "gpt-3.5-turbo", temperature = 0) {
-    const systemMessage = getSystemMessage(userData, functionInputTest);
-    const messagesWithSystem = [{ "role": "system", "content": systemMessage }, ...messages];
+// Updated getChatResponse function to use Gemini API
+async function getChatResponse(messages, userData, functionInputTest, model = "gemini-2.5-flash", temperature = 0) { // Changed default model
+    const systemMessageContent = getSystemMessage(userData, functionInputTest);
+
+    let formattedMessages = [];
+
+    // Gemini API's `generateContent` method expects an array of messages with 'user' and 'model' roles.
+    // There isn't a direct 'system' role. A common pattern is to include system instructions
+    // as the first 'user' turn to establish the persona and guidelines.
+    formattedMessages.push({
+        role: "user",
+        parts: [{ text: systemMessageContent }]
+    });
+
+    // Translate existing chat messages from OpenAI format to Gemini format
+    for (const msg of messages) {
+        formattedMessages.push({
+            role: msg.role === "assistant" ? "model" : "user", // Map 'assistant' to 'model' for Gemini
+            parts: [{ text: msg.content }]
+        });
+    }
+
     try {
-        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        // Get the generative model instance with specified model and generation configuration
+        const generativeModel = genAI.getGenerativeModel({
             model: model,
-            messages: messagesWithSystem,
-            temperature: temperature
-        }, {
-            headers: {
-                'Authorization': `Bearer ${openaiApiKey}`,
-                'Content-Type': 'application/json'
+            generationConfig: {
+                temperature: temperature
             }
         });
 
-        return response.data.choices[0].message.content;
+        // Send the formatted chat history to the Gemini API
+        const result = await generativeModel.generateContent({
+            contents: formattedMessages
+        });
+
+        // Extract the text content from the Gemini response
+        const response = await result.response;
+        return response.text();
     } catch (error) {
-        console.error('Error getting chat response:', error);
+        console.error('Error getting chat response from Gemini API:', error);
         throw error;
     }
 }
@@ -95,7 +135,8 @@ app.post('/juancito', async (req, res) => {
         context.push({ "role": "user", "content": userMessage });
         addGreetingIfNeeded(context);
 
-        const responseMessage = await getChatResponse(context, userData, question, "gpt-3.5-turbo", temperature);
+        // Call the updated getChatResponse function for Gemini
+        const responseMessage = await getChatResponse(context, userData, question, "gemini-2.5-flash", temperature); // Ensure the Gemini model is specified
 
         context.push({ "role": "assistant", "content": responseMessage });
 
@@ -105,9 +146,17 @@ app.post('/juancito', async (req, res) => {
         res.status(500).json({ response: 'An error occurred' });
     }
 });
+app.get('/initialMessage', (req, res) => {
+    res.json({ message: 'This is the initial message from the server.' });
+});
 
 app.get('/userData', (req, res) => {
     res.json(userData);
+});
+
+// Health check endpoint for container monitoring
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 const port = process.env.PORT || 3000;

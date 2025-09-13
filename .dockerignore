@@ -1,0 +1,39 @@
+# Version control
+.git
+.gitignore
+
+# Dependency directories
+node_modules
+npm-debug.log
+
+# Environment variables
+.env
+.env.*
+
+# Development tools
+.vscode
+.idea
+
+# Logs
+logs
+*.log
+
+# Build files
+dist
+build
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Deployment scripts
+deploy.sh
+
+# OS files
+.DS_Store
+Thumbs.db
