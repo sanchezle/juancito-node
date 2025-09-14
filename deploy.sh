@@ -7,7 +7,7 @@ CONTAINER_NAME="juancito-api"
 HOST_PORT=5006
 CONTAINER_PORT=5000
 REGISTRY_URL="localhost:5000"
-API_KEY_PATH="/home/owl1/secrets/juancito_api_key.env"
+API_KEY_PATH="./.env"
 
 # Display info
 echo "--------------------------------------------"
