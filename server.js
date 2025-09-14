@@ -2,21 +2,13 @@ const express = require('express');
 const dotenv = require('dotenv');
 // const axios = require('axios'); // Remove axios
 const cors = require('cors');
+const corsOptions = require('./config/corsOptions');
 const { GoogleGenerativeAI } = require("@google/generative-ai"); // Import GoogleGenerativeAI
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-
-// CORS configuration with support for production and development environments
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'https://zingy-baklava-d1f0ae.netlify.app',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  credentials: true,
-  optionsSuccessStatus: 204,
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
 
 // Apply CORS middleware before defining routes
 app.use(cors(corsOptions));
