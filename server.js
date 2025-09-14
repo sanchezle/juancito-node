@@ -12,11 +12,24 @@ const app = express();
 // CORS configuration with support for production and development environments
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || 'https://zingy-baklava-d1f0ae.netlify.app',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   credentials: true,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
+
+// Apply CORS middleware before defining routes
 app.use(cors(corsOptions));
+
+// Add a specific CORS pre-flight handler for OPTIONS requests
+app.options('*', cors(corsOptions));
+
+// Debug middleware for CORS issues
+app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.path}`);
+  console.log(`Origin: ${req.headers.origin}`);
+  next();
+});
 
 app.use(express.json());
 
@@ -121,7 +134,10 @@ function addGreetingIfNeeded(context) {
 }
 
 
-app.post('/juancito', async (req, res) => {
+// Define the base path for all routes
+const BASE_PATH = '/projects/juancito';
+
+app.post(BASE_PATH, async (req, res) => {
     try {
         const userMessage = req.body.message;
         const context = req.body.context || [];
@@ -146,16 +162,17 @@ app.post('/juancito', async (req, res) => {
         res.status(500).json({ response: 'An error occurred' });
     }
 });
-app.get('/initialMessage', (req, res) => {
+
+app.get(`${BASE_PATH}/initialMessage`, (req, res) => {
     res.json({ message: 'This is the initial message from the server.' });
 });
 
-app.get('/userData', (req, res) => {
+app.get(`${BASE_PATH}/userData`, (req, res) => {
     res.json(userData);
 });
 
 // Health check endpoint for container monitoring
-app.get('/health', (req, res) => {
+app.get(`${BASE_PATH}/health`, (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
