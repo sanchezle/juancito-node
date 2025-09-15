@@ -1,6 +1,5 @@
 const express = require('express');
 const dotenv = require('dotenv');
-// const axios = require('axios'); // Remove axios
 const cors = require('cors');
 const corsOptions = require('./config/corsOptions');
 const { GoogleGenerativeAI } = require("@google/generative-ai"); // Import GoogleGenerativeAI
@@ -10,7 +9,7 @@ dotenv.config();
 
 const app = express();
 
-// Apply CORS middleware before defining routes
+// Apply CORS middleware before defining routes - just once
 app.use(cors(corsOptions));
 
 // Add a specific CORS pre-flight handler for OPTIONS requests
@@ -20,6 +19,26 @@ app.options('*', cors(corsOptions));
 app.use((req, res, next) => {
   console.log(`Request: ${req.method} ${req.path}`);
   console.log(`Origin: ${req.headers.origin}`);
+  next();
+});
+
+// Additional middleware to ensure CORS headers are properly set
+app.use((req, res, next) => {
+  // Make sure we don't duplicate headers
+  if (!res.headersSent) {
+    // Ensure we have the proper CORS headers
+    const origin = req.headers.origin;
+    if (origin && corsOptions.origin && typeof corsOptions.origin === 'function') {
+      corsOptions.origin(origin, (err, allowed) => {
+        if (allowed) {
+          res.setHeader('Access-Control-Allow-Origin', origin);
+          res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+          res.setHeader('Access-Control-Allow-Credentials', 'true');
+        }
+      });
+    }
+  }
   next();
 });
 
